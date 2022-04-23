@@ -1,4 +1,5 @@
 import createError from 'http-errors';
+import 'dotenv/config'
 import express, {ErrorRequestHandler} from "express";
 import path from "path";
 import { router as indexRouter } from "./routes";
