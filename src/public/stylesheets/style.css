@@ -7,3 +7,7 @@ table,td,th {
   border: 1px solid black;
   border-collapse: collapse;
 }
+.small {
+  font-size: 8px;
+  color: gray;
+}
