@@ -8,16 +8,19 @@ import logger from "morgan";
 import livereload from "livereload";
 import connectLivereload from "connect-livereload";
 
-const liveReloadServer = livereload.createServer();
-liveReloadServer.watch(__dirname);
-liveReloadServer.server.once("connection", () => {
-  setTimeout(() => {
-    liveReloadServer.refresh("/");
-  }, 100);
-});
+if (process.env.debug) {
+  const liveReloadServer = livereload.createServer();
+  liveReloadServer.watch(__dirname);
+  liveReloadServer.server.once("connection", () => {
+    setTimeout(() => {
+      liveReloadServer.refresh("/");
+    }, 100);
+  });
+}
 
 const app = express();
-app.use(connectLivereload());
+if (process.env.debug)
+  app.use(connectLivereload());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
