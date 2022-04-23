@@ -3,7 +3,7 @@ import * as https from "https";
 export async function extractAsync(options : WebUntisExtractorOptions): Promise<Lesson[]> {
     const urls = options.classes.map(c => options.baseUrl+`?elementType=1&elementId=${c.id}&date=${options.date.getFullYear()}-${options.date.getMonth()+1}-${options.date.getDate()}`);
     const httpRequests = urls.map((url: string, index: number): Promise<Lesson[]> => {
-        const schoolclass = options.classes[index].name;
+        const schoolclass = options.classes[index];
         return new Promise((resolve, reject) => {
             const req = https.get(url, { headers: { 'Cookie': `schoolname="${options.schoolId}"` } }, res => {
                 let json = '';
@@ -32,6 +32,7 @@ export interface WebUntisExtractorOptions {
 export interface WebUntisClass {
     id: number;
     name: string;
+    addsSubjects: boolean;
 }
 
 function onlyUnique(value: any, index: number, self: any[]) {
@@ -150,9 +151,9 @@ class ElementLesson {
 export class Lesson {
     internal: ElementLesson;
     elements: Element[];
-    schoolclass: string;
+    schoolclass: WebUntisClass;
 
-    constructor(internal: ElementLesson, elements: Element[], schoolclass: string) {
+    constructor(internal: ElementLesson, elements: Element[], schoolclass: WebUntisClass) {
         this.internal = internal;
         this.elements = elements;
         this.schoolclass = schoolclass;

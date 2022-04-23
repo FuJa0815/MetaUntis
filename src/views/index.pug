@@ -11,11 +11,18 @@ block content
     function onlyUnique(value, index, self) {
       return self.indexOf(value) === index;
     }
-    const subjects = lessons.map(l => l.getSubject?.toString()).filter(l => l && l !== "").filter(onlyUnique).sort()
-  each subject in subjects
-    label
-      input(type="checkbox", name=subject, checked)
-      span= subject
+    let l = lessons.filter(l => l.getSubject?.toString() && l.getSubject?.toString() !== "").filter(onlyUnique).sort()
+
+    l = [...new Map(l.map(item =>
+            [item.getSubject.toString(), item])).values()];
+  label
+    input(type="checkbox", id="showAll")
+    span Zeige Medizinfächer
+    br
+  each lesson in l.sort((a,b) => a.getSubject.toString().localeCompare(b.getSubject.toString()))
+    label(aria-filtered=!lesson.schoolclass.addsSubjects)
+      input(type="checkbox", name=lesson.getSubject.toString())
+      span= lesson.getSubject.toString()
   table
     tr
       th Tag
@@ -35,12 +42,12 @@ block content
         td= lesson.getSubject
         td= lesson.getTeachers
         td= lesson.getRoom
-        td= lesson.schoolclass
+        td= lesson.schoolclass.name
         td= lesson.lessonText
         td= lesson.cellState
   p.small MetaUntis by FuJa0815. #[a(href="https://github.com/FuJa0815/MetaUntis") Source]
   script.
-    const subjects = !{JSON.stringify(subjects)}
+    const subjects = !{JSON.stringify(l.map(x => x.getSubject.toString()))};
     function getChecked() {
       return $('input:checked').map((i,v) => v.name).toArray()
     }
@@ -55,5 +62,14 @@ block content
         }
       })
     }
+    function updateShowAll() {
+      const checked = $('#showAll').is(":checked");
+      if (checked)
+        $('label[aria-filtered]').show()
+      else
+        $('label[aria-filtered]').hide()
+    }
     $('input').on('change', update);
+    $('#showAll').on('change', updateShowAll);
     update();
+    updateShowAll();
