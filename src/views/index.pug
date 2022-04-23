@@ -1,5 +1,58 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+  -
+    function getWeekday(date) {
+      return date.toLocaleString("de-AT", { weekday: 'long' });
+    }
+    function getTime(date) {
+      return date.toLocaleString("de-AT", { hour: 'numeric', minute: 'numeric' });
+    }
+    function onlyUnique(value, index, self) {
+      return self.indexOf(value) === index;
+    }
+    const subjects = lessons.map(l => l.getSubject?.toString()).filter(l => l && l !== "").filter(onlyUnique).sort()
+  each subject in subjects
+    label
+      input(type="checkbox", name=subject, checked)
+      span= subject
+  table
+    tr
+      th Tag
+      th Von
+      th Bis
+      th Fach
+      th Lehrer
+      th Raum
+      th Klasse
+      th Info
+      th Status
+    each lesson in lessons.filter(l => !l.isFree)
+      tr
+        td= getWeekday(lesson.startTime)
+        td= getTime(lesson.startTime)
+        td= getTime(lesson.endTime)
+        td= lesson.getSubject
+        td= lesson.getTeachers
+        td= lesson.getRoom
+        td= lesson.schoolclass
+        td= lesson.lessonText
+        td= lesson.cellState
+  script.
+    const subjects = !{JSON.stringify(subjects)}
+    function getChecked() {
+      return $('input:checked').map((i,v) => v.name).toArray()
+    }
+    function update() {
+      const checked = getChecked();
+      $('tr:not(:first-child)').each((i, tr) => {
+        const subject = $( tr ).children('td:nth-child(4)').text();
+        if (checked.includes(subject) || !subject) {
+          $(tr).show()
+        } else {
+          $(tr).hide()
+        }
+      })
+    }
+    $('input').on('change', update);
+    update();

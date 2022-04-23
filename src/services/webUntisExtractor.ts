@@ -2,7 +2,8 @@ import * as https from "https";
 
 export async function extractAsync(options : WebUntisExtractorOptions): Promise<Lesson[]> {
     const urls = options.classes.map(c => options.baseUrl+`?elementType=1&elementId=${c.id}&date=${options.date.getFullYear()}-${options.date.getMonth()+1}-${options.date.getDate()}`);
-    const httpRequests = urls.map((url: string): Promise<Lesson[]> => {
+    const httpRequests = urls.map((url: string, index: number): Promise<Lesson[]> => {
+        const schoolclass = options.classes[index].name;
         return new Promise((resolve, reject) => {
             const req = https.get(url, { headers: { 'Cookie': `schoolname="${options.schoolId}"` } }, res => {
                 let json = '';
@@ -11,7 +12,7 @@ export async function extractAsync(options : WebUntisExtractorOptions): Promise<
                     const o = JSON.parse(json).data.result.data;
                     const realElements = o.elements.map((e:any) => new Element(e.id, e.type, e.name, e.displayname));
                     const realElementPeriods = Object.values(o.elementPeriods as Object)[0].map((e:any) => new ElementPeriod(e.id, e.lessonId, e.lessonNumber, e.lessonText, e.date, e.startTime, e.endTime, e.elements, e.cellState));
-                    const lessons = aggregateElementPeriods(realElementPeriods).map(a => new Lesson(a, realElements));
+                    const lessons = aggregateElementPeriods(realElementPeriods).map(a => new Lesson(a, realElements, schoolclass));
                     resolve(lessons);
                 });
             });
@@ -84,6 +85,9 @@ class ElementPeriod {
     public get isStandard(): boolean {
         return this.cellState == "STANDARD"
     }
+    public get isFree(): boolean {
+        return this.cellState == "FREE"
+    }
 
     constructor(id: number, lessonId: number, lessonNumber: number, lessonText: string, date: number, startTime: number, endTime: number, elements: { type: number, id: number }[], cellState: string) {
         this.id = id;
@@ -131,6 +135,9 @@ class ElementLesson {
     public get isStandard(): boolean {
         return this.elements.every(e => e.isStandard);
     }
+    public get isFree(): boolean {
+        return this.elements.every(e => e.isFree);
+    }
 
     getTeachers = (elements: Element[]): Element[] => this.elements.flatMap(x => x.getTeachers(elements)).filter(onlyUnique);
     getRoom = (elements: Element[]): Element => this.elements[0].getRoom(elements);
@@ -143,10 +150,12 @@ class ElementLesson {
 export class Lesson {
     internal: ElementLesson;
     elements: Element[];
+    schoolclass: string;
 
-    constructor(internal: ElementLesson, elements: Element[]) {
+    constructor(internal: ElementLesson, elements: Element[], schoolclass: string) {
         this.internal = internal;
         this.elements = elements;
+        this.schoolclass = schoolclass;
     }
     public get lessonId(): number {
         return this.internal.lessonId;
@@ -175,6 +184,9 @@ export class Lesson {
     }
     public get isStandard(): boolean {
         return this.internal.isStandard;
+    }
+    public get isFree(): boolean {
+        return this.internal.isFree;
     }
     public get getTeachers(): Element[] {
         return this.internal.getTeachers(this.elements);
